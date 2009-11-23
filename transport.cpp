@@ -28,7 +28,7 @@
 #include <KConfigDialog>
 #include <KStandardDirs>
 #include <QHttp>
-#include <QUrl>
+#include <QMap>
 #include "transport.h"
 #include "service.h"
 #include "ui_config.h"
@@ -43,9 +43,12 @@ struct Transport::Private
 {
    // Options
    QString home;
+   Service service;
+   QMap<int,QString> serviceMap;
 
    // Transports
    QHttp http;
+   int connId;
 
    // Widgets
    Plasma::LineEdit* searchLine;
@@ -93,9 +96,19 @@ void Transport::init()
    scrollWidget->setWidget(dataWidget);
    d->resultLayout = new QGraphicsLinearLayout(Qt::Vertical, dataWidget);
    layout->addItem(scrollWidget);
+
+   // Connect search result
+   connect(&d->http, SIGNAL(requestFinished(int,bool)), this, SLOT(searchResult(int,bool)));
+
+   // Load config
+   loadConfig();
 }
 
 void Transport::search(const QString &destination, const QDateTime &dt)
+{
+}
+
+void Transport::searchResult(int id, bool error)
 {
 }
 
@@ -103,16 +116,20 @@ void Transport::createConfigurationInterface(KConfigDialog *parent)
 {
    // Create configuration
    QWidget* configWidget = new QWidget(parent);
-   KConfigGroup configGroup = config();
    d->configUi.setupUi(configWidget);
-   d->configUi.home->setText(configGroup.readEntry("home"));
+   d->configUi.home->setText(d->home);
    
    // Fill services
    Service serv;
+   d->serviceMap.clear();
    QStringList services = KGlobal::dirs()->findAllResources( "data", "plasma_engine_transport/services/*.xml" );
    foreach(const QString& service, services) {
-      if(serv.load(service))
+      if(serv.load(service)) {
          d->configUi.service->addItem(serv.name());
+         d->serviceMap.insert(d->configUi.service->count() - 1, service);
+         if(serv.name() == d->service.name())
+            d->configUi.service->setCurrentIndex(d->configUi.service->count() - 1);
+      }
    }
 
    // Create page
@@ -123,14 +140,26 @@ void Transport::createConfigurationInterface(KConfigDialog *parent)
 
 void Transport::configAccepted()
 {
+   // Save config
+   KConfigGroup configGroup = config();
+   configGroup.writeEntry("home", d->configUi.home->text());
+   configGroup.writeEntry("service", d->serviceMap[d->configUi.service->currentIndex()]);
+   configGroup.sync();
+   d->serviceMap.clear();
+
+   // Reload config
+   loadConfig();
 }
 
 void Transport::loadConfig()
 {
-}
+   // Load config
+   KConfigGroup configGroup = config();
+   d->home = configGroup.readEntry("home");
+   if(d->service.load(configGroup.readEntry("service")))
+      d->service.parse();
 
-void Transport::loadService(const QString &service)
-{
+   qDebug() << "Config: from " << d->home << " (" << d->service.name() << ")";
 }
 
 #include "transport.moc"

@@ -35,8 +35,8 @@ class Transport : public Plasma::Applet
 
      protected slots:
         void loadConfig();
-        void loadService(const QString& service);
         void configAccepted();
+        void searchResult(int id, bool error);
 
    protected:
         void createConfigurationInterface(KConfigDialog *parent);
