@@ -16,8 +16,11 @@ include_directories( ${CMAKE_SOURCE_DIR}
 # Source files
 set(project_src transport.cpp)
 
+# Services
+add_subdirectory(services)
+
 # UI
-#kde4_add_ui_files(project_src config.ui)
+kde4_add_ui_files(project_src config.ui)
 
 # Plasma plugin
 kde4_add_plugin(plasma_applet_transport ${project_src})

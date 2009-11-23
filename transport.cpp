@@ -30,6 +30,7 @@
 #include <QHttp>
 #include <QUrl>
 #include "transport.h"
+#include "ui_config.h"
 
 // State tracking
 enum State {
@@ -42,10 +43,14 @@ struct Transport::Private
    // Options
    QString home;
 
+   // Transports
+   QHttp http;
+
    // Widgets
    Plasma::LineEdit* searchLine;
    Plasma::PushButton* searchButton;
    QGraphicsLinearLayout* resultLayout;
+   Ui::config configUi;
 };
 
 Transport::Transport(QObject *parent, const QVariantList &args)
@@ -95,6 +100,16 @@ void Transport::search(const QString &destination, const QDateTime &dt)
 
 void Transport::createConfigurationInterface(KConfigDialog *parent)
 {
+   // Create configuration
+   QWidget* configWidget = new QWidget(parent);
+   KConfigGroup configGroup = config();
+   d->configUi.setupUi(configWidget);
+   d->configUi.home->setText(configGroup.readEntry("home"));
+
+   // Create page
+   connect(parent, SIGNAL(okClicked()), this, SLOT(configAccepted()));
+   parent->setButtons(KDialog::Ok | KDialog::Cancel);
+   parent->addPage(configWidget, i18n("Configuration"), icon());
 }
 
 void Transport::configAccepted()
