@@ -82,21 +82,27 @@ bool Service::parse()
 {
    // Load query data
    QDomElement root = d->doc.firstChildElement("service");
-   QDomElement elem = root.firstChildElement("query");
+   QDomElement head = root.firstChildElement("query");
+   QDomElement elem = head;
 
    // Query method
-   if(elem.attribute("method", "GET").toUpper() == "GET")
+   if(head.attribute("method", "GET").toUpper() == "GET")
       d->method = "GET";
    else
       d->method = "POST";
 
    // Url
-   d->url.setUrl(elem.firstChildElement("url").text());
+   d->url.setUrl(head.firstChildElement("url").text());
+   elem = head.firstChildElement("data");
+   for(elem = elem.firstChildElement(); !elem.isNull(); elem = elem.nextSiblingElement()) {
+      d->url.addQueryItem(elem.tagName(), elem.text());
+      qDebug() << "Data: " << elem.tagName() << " = " << elem.text();
+   }
    qDebug() << "Url: " << d->url.toString();
 
    // Load parameter mapping
    d->queryMap.clear();
-   elem = elem.firstChildElement("map");
+   elem = head.firstChildElement("map");
    for(elem = elem.firstChildElement(); !elem.isNull(); elem = elem.nextSiblingElement()) {
       d->queryMap.insert(elem.tagName(), elem.text());
       qDebug() << "Map: " << elem.tagName() << " -> " << elem.text();

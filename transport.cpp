@@ -106,10 +106,50 @@ void Transport::init()
 
 void Transport::search(const QString &destination, const QDateTime &dt)
 {
+   // Use default destination
+   QString to(destination);
+   if(to.isEmpty())
+      to = d->searchLine->text();
+
+   // Create Http request
+   QUrl url = d->service.url();
+   QHttpRequestHeader header(d->service.method(), url.path());
+   header.setValue("Host", url.host());
+   header.setContentType("application/x-www-form-urlencoded");
+   url.addQueryItem(d->service.param("date"), dt.date().toString("d.M.yyyy"));
+   url.addQueryItem(d->service.param("from"), d->home);
+   url.addQueryItem(d->service.param("to"), to);
+   url.addQueryItem(d->service.param("time"), dt.time().toString("h:mm"));
+
+   // Query service
+   d->http.setHost(url.host());
+   d->connId = d->http.request(header, url.encodedQuery());
 }
 
 void Transport::searchResult(int id, bool error)
 {
+   // Check current search only
+   if(d->connId != id)
+      return;
+   
+   // Check error
+   if(error) {
+      qWarning("Http: error in response \'%d\'", id);
+      return;
+   }
+
+   // Check for redirection
+   QHttpResponseHeader response = d->http.lastResponse();
+   qDebug() << "Received: code " << response.statusCode() << " (" << d->http.bytesAvailable() << " bytes)";
+   if(response.statusCode() > 299 && response.statusCode() < 400) {
+      qDebug() << "Redirect to: " << response.value("Location");
+      d->http.setHost(d->service.url().host());
+      d->connId = d->http.get(QString("/") + response.value("Location"));
+      return;
+   }
+
+   // Parse result
+   qDebug() << "Received: " << d->http.bytesAvailable() << " bytes";
 }
 
 void Transport::createConfigurationInterface(KConfigDialog *parent)
