@@ -1,0 +1,12 @@
+Transport, Plasma applet
+------------------------
+Transport is Plasma applet for searching public transport connections
+from your location to target destination via online services.
+
+
+Installation
+------------
+mkdir build && cd build
+cmake -DCMAKE_INSTALL_PREFIX=`kde4-config --prefix` ..
+make
+make install
