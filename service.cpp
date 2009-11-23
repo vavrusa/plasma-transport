@@ -17,8 +17,8 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.         *
  ***************************************************************************/
 
-#include <QDomDocument>
-#include <QDomElement>
+#include <QStringList>
+#include <QScriptEngine>
 #include <QDebug>
 #include <QFile>
 #include <QUrl>
@@ -27,11 +27,8 @@
 
 struct Service::Private {
    bool                  isLoaded; // State
-   QString                   name; // Service name
-   QUrl                       url; // Service URL
-   QMap<QString,QString> queryMap; // Query param mapping
-   QString                 method; // Query method
-   QDomDocument               doc; // DOM document
+   QScriptEngine           engine; // Engine
+   QScriptValue      scriptObject; // Scriptable object
 };
 
 Service::Service(const QString& fileName)
@@ -39,8 +36,7 @@ Service::Service(const QString& fileName)
 {
    // Implicit load
    d->isLoaded = false;
-   if(!fileName.isEmpty())
-      load(fileName);
+   load(fileName);
 }
 
 Service::~Service()
@@ -61,73 +57,54 @@ bool Service::load(const QString& fileName)
    // Open file
    if(fileName.isEmpty())
       return false;
+
    QFile file(fileName);
    if(!file.open(QFile::ReadOnly))
       return false;
 
    // Load content
-   d->isLoaded = d->doc.setContent(file.readAll());
+   qDebug() << "Script: " << fileName;
+   QScriptValue cls = d->engine.evaluate(file.readAll(), fileName);
+   d->isLoaded = !d->engine.hasUncaughtException();
    file.close();
 
-   // Parse header
-   QDomElement elem = d->doc.firstChildElement("service");
-   if(elem.isNull())
-      return d->isLoaded = false;
-   d->name = elem.attribute("name");
+   // Debug
+   if(d->engine.hasUncaughtException()) {
+      qDebug() << "Failed to load, backtrace: ";
+      foreach(const QString& line, d->engine.uncaughtExceptionBacktrace())
+         qDebug() << "  # " << line;
+   }
+   else {
+      d->scriptObject = d->engine.globalObject().property("Service");
+   }
 
    return d->isLoaded;
 }
 
-bool Service::parse()
+QString Service::name()
 {
-   // Load query data
-   QDomElement root = d->doc.firstChildElement("service");
-   QDomElement head = root.firstChildElement("query");
-   QDomElement elem = head;
+   return d->scriptObject.property("name").toString();
+}
 
-   // Query method
-   if(head.attribute("method", "GET").toUpper() == "GET")
-      d->method = "GET";
-   else
-      d->method = "POST";
+QUrl Service::url()
+{
+   return QUrl(d->scriptObject.property("url").toString());
+}
 
-   // Url
-   d->url.setUrl(head.firstChildElement("url").text());
-   elem = head.firstChildElement("data");
-   for(elem = elem.firstChildElement(); !elem.isNull(); elem = elem.nextSiblingElement()) {
-      d->url.addQueryItem(elem.tagName(), elem.text());
-      qDebug() << "Data: " << elem.tagName() << " = " << elem.text();
-   }
-   qDebug() << "Url: " << d->url.toString();
+QString Service::method()
+{
+   return d->scriptObject.property("method").toString();
+}
 
-   // Load parameter mapping
-   d->queryMap.clear();
-   elem = head.firstChildElement("map");
-   for(elem = elem.firstChildElement(); !elem.isNull(); elem = elem.nextSiblingElement()) {
-      d->queryMap.insert(elem.tagName(), elem.text());
-      qDebug() << "Map: " << elem.tagName() << " -> " << elem.text();
-   }
+QString Service::key(const QString& k)
+{
+   QScriptValue keyScript = d->scriptObject.property("key");
+   return keyScript.call(d->scriptObject, QScriptValueList() << k).toString();
+}
 
+bool Service::parse(const QString& data)
+{
+   QScriptValue parseScript = d->scriptObject.property("parse");
+   parseScript.call(d->scriptObject, QScriptValueList() << data);
    return true;
 }
-
-const QString& Service::name()
-{
-   return d->name;
-}
-
-const QUrl& Service::url()
-{
-   return d->url;
-}
-
-const QString& Service::method()
-{
-   return d->method;
-}
-
-const QString& Service::param(const QString& key)
-{
-   return d->queryMap[key];
-}
-

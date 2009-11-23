@@ -24,7 +24,11 @@ kde4_add_ui_files(project_src config.ui)
 
 # Plasma plugin
 kde4_add_plugin(plasma_applet_transport ${project_src})
-target_link_libraries(plasma_applet_transport ${KDE4_KDEUI_LIBS} ${QT_QTNETWORK_LIBRARY} ${QT_QTXML_LIBRARY} ${KDE4_PLASMA_LIBS})
+target_link_libraries(plasma_applet_transport ${KDE4_KDEUI_LIBS}
+                                              ${QT_QTNETWORK_LIBRARY}
+                                              ${QT_QTSCRIPT_LIBRARY}
+                                              ${KDE4_PLASMA_LIBS}
+                                              )
 
 # Install paths
 install(TARGETS plasma_applet_transport

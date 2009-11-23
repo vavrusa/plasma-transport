@@ -29,14 +29,14 @@ class Service
    Service(const QString& fileName = QString());
    ~Service();
 
-   const QString& name();
-   const QUrl& url();
-   const QString& method();
-   const QString& param(const QString& key);
+   QString name();
+   QUrl url();
+   QString method();
+   QString key(const QString& key);
 
    bool isLoaded();
    bool load(const QString& fileName);
-   bool parse();
+   bool parse(const QString& data);
 
    private:
    struct Private;
