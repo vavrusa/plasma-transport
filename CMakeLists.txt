@@ -14,7 +14,7 @@ include_directories( ${CMAKE_SOURCE_DIR}
                      )
 
 # Source files
-set(project_src transport.cpp)
+set(project_src transport.cpp service.cpp)
 
 # Services
 add_subdirectory(services)

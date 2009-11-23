@@ -30,6 +30,7 @@
 #include <QHttp>
 #include <QUrl>
 #include "transport.h"
+#include "service.h"
 #include "ui_config.h"
 
 // State tracking
@@ -105,6 +106,14 @@ void Transport::createConfigurationInterface(KConfigDialog *parent)
    KConfigGroup configGroup = config();
    d->configUi.setupUi(configWidget);
    d->configUi.home->setText(configGroup.readEntry("home"));
+   
+   // Fill services
+   Service serv;
+   QStringList services = KGlobal::dirs()->findAllResources( "data", "plasma_engine_transport/services/*.xml" );
+   foreach(const QString& service, services) {
+      if(serv.load(service))
+         d->configUi.service->addItem(serv.name());
+   }
 
    // Create page
    connect(parent, SIGNAL(okClicked()), this, SLOT(configAccepted()));
