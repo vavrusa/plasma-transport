@@ -21,12 +21,17 @@
 #include <QDomElement>
 #include <QDebug>
 #include <QFile>
+#include <QUrl>
+#include <QMap>
 #include "service.h"
 
 struct Service::Private {
-   bool    isLoaded; // State
-   QString     name; // Service name
-   QDomDocument doc; // DOM document
+   bool                  isLoaded; // State
+   QString                   name; // Service name
+   QUrl                       url; // Service URL
+   QMap<QString,QString> queryMap; // Query param mapping
+   QString                 method; // Query method
+   QDomDocument               doc; // DOM document
 };
 
 Service::Service(const QString& fileName)
@@ -54,6 +59,8 @@ bool Service::load(const QString& fileName)
    d->isLoaded = false;
 
    // Open file
+   if(fileName.isEmpty())
+      return false;
    QFile file(fileName);
    if(!file.open(QFile::ReadOnly))
       return false;
@@ -71,7 +78,50 @@ bool Service::load(const QString& fileName)
    return d->isLoaded;
 }
 
+bool Service::parse()
+{
+   // Load query data
+   QDomElement root = d->doc.firstChildElement("service");
+   QDomElement elem = root.firstChildElement("query");
+
+   // Query method
+   if(elem.attribute("method", "GET").toUpper() == "GET")
+      d->method = "GET";
+   else
+      d->method = "POST";
+
+   // Url
+   d->url.setUrl(elem.firstChildElement("url").text());
+   qDebug() << "Url: " << d->url.toString();
+
+   // Load parameter mapping
+   d->queryMap.clear();
+   elem = elem.firstChildElement("map");
+   for(elem = elem.firstChildElement(); !elem.isNull(); elem = elem.nextSiblingElement()) {
+      d->queryMap.insert(elem.tagName(), elem.text());
+      qDebug() << "Map: " << elem.tagName() << " -> " << elem.text();
+   }
+
+   return true;
+}
+
 const QString& Service::name()
 {
    return d->name;
 }
+
+const QUrl& Service::url()
+{
+   return d->url;
+}
+
+const QString& Service::method()
+{
+   return d->method;
+}
+
+const QString& Service::param(const QString& key)
+{
+   return d->queryMap[key];
+}
+

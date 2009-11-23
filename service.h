@@ -21,6 +21,7 @@
 #define SERVICE_H
 
 #include <QString>
+#include <QUrl>
 
 class Service
 {
@@ -28,10 +29,14 @@ class Service
    Service(const QString& fileName = QString());
    ~Service();
 
+   const QString& name();
+   const QUrl& url();
+   const QString& method();
+   const QString& param(const QString& key);
 
    bool isLoaded();
    bool load(const QString& fileName);
-   const QString& name();
+   bool parse();
 
    private:
    struct Private;
