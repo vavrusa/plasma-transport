@@ -17,11 +17,16 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.         *
  ***************************************************************************/
 
+#include <Plasma/IconWidget>
 #include <Plasma/ScrollWidget>
 #include <Plasma/BusyWidget>
+#include <Plasma/PushButton>
+#include <Plasma/LineEdit>
+#include <Plasma/Label>
 #include <QGraphicsLinearLayout>
 #include <QPainter>
 #include <KConfigDialog>
+#include <KStandardDirs>
 #include <QHttp>
 #include <QUrl>
 #include "transport.h"
@@ -34,8 +39,13 @@ enum State {
 
 struct Transport::Private
 {
-   // Config
+   // Options
    QString home;
+
+   // Widgets
+   Plasma::LineEdit* searchLine;
+   Plasma::PushButton* searchButton;
+   QGraphicsLinearLayout* resultLayout;
 };
 
 Transport::Transport(QObject *parent, const QVariantList &args)
@@ -54,11 +64,33 @@ Transport::~Transport()
 
 void Transport::init()
 {
+   // Create main layout
+   QGraphicsLinearLayout* layout = new QGraphicsLinearLayout(Qt::Vertical, this);
+
+   // Create search layout
+   QGraphicsLinearLayout* searchLayout = new QGraphicsLinearLayout(Qt::Horizontal, layout);
+
+   // Search direction line
+   d->searchLine = new Plasma::LineEdit(this);
+   searchLayout->addItem(d->searchLine);
+
+   // Search submit button
+   d->searchButton = new Plasma::PushButton(this);
+   d->searchButton->setText(tr("Search"));
+   connect(d->searchButton, SIGNAL(clicked()), this, SLOT(search()));
+   searchLayout->addItem(d->searchButton);
+   layout->addItem(searchLayout);
+
+   // Create results layout
+   Plasma::ScrollWidget* scrollWidget = new Plasma::ScrollWidget(this);
+   QGraphicsWidget* dataWidget = new QGraphicsWidget(scrollWidget);
+   scrollWidget->setWidget(dataWidget);
+   d->resultLayout = new QGraphicsLinearLayout(Qt::Vertical, dataWidget);
+   layout->addItem(scrollWidget);
 }
 
 void Transport::search(const QString &destination, const QDateTime &dt)
 {
-
 }
 
 void Transport::createConfigurationInterface(KConfigDialog *parent)
@@ -66,6 +98,14 @@ void Transport::createConfigurationInterface(KConfigDialog *parent)
 }
 
 void Transport::configAccepted()
+{
+}
+
+void Transport::loadConfig()
+{
+}
+
+void Transport::loadService(const QString &service)
 {
 }
 

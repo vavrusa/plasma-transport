@@ -31,9 +31,11 @@ class Transport : public Plasma::Applet
 
    public slots:
         void init();
-        void search(const QString& destination, const QDateTime& dt = QDateTime::currentDateTime());
+        void search(const QString& destination = QString(), const QDateTime& dt = QDateTime::currentDateTime());
 
-   protected slots:
+     protected slots:
+        void loadConfig();
+        void loadService(const QString& service);
         void configAccepted();
 
    protected:
