@@ -21,8 +21,11 @@
 #define SERVICE_H
 
 #include <QString>
+#include <QTime>
 #include <QUrl>
+#include <QMap>
 
+class Connection;
 class Service
 {
    public:
@@ -36,11 +39,50 @@ class Service
 
    bool isLoaded();
    bool load(const QString& fileName);
-   bool parse(const QString& data);
+   QList<Connection> parse(const QString& data);
 
    private:
    struct Private;
    Private *d;
+};
+
+class Connection {
+
+   public:
+
+   // Transit structure
+   struct Transit {
+      QString    from;
+      QString    mean;
+      QTime   arrival;
+      QTime departure;
+   };
+
+   // Transits
+   const QList<Transit>& transits() {
+      return mTransits;
+   }
+
+   void setTransits(QList<Transit>& transits) {
+      mTransits = transits;
+   }
+
+   void addTransit(Transit trans) {
+      mTransits.append(trans);
+   }
+
+   // Parameters
+   const QString& value(const QString& key) {
+      return mParams[key];
+   }
+
+   void setValue(const QString& key, const QString& value) {
+      mParams[key] = value;
+   }
+
+   private:
+   QMap<QString,QString> mParams;
+   QList<Transit> mTransits;
 };
 
 #endif // SERVICE_H

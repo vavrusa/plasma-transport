@@ -19,6 +19,7 @@
 
 #include <QStringList>
 #include <QScriptEngine>
+#include <QScriptValueIterator>
 #include <QDebug>
 #include <QFile>
 #include <QUrl>
@@ -102,9 +103,57 @@ QString Service::key(const QString& k)
    return keyScript.call(d->scriptObject, QScriptValueList() << k).toString();
 }
 
-bool Service::parse(const QString& data)
+QList<Connection> Service::parse(const QString& data)
 {
+   // Call script
    QScriptValue parseScript = d->scriptObject.property("parse");
    parseScript.call(d->scriptObject, QScriptValueList() << data);
-   return true;
+
+   // Evaluate
+   QList<Connection> connList;
+   QScriptValue result = d->scriptObject.property("result");
+   QScriptValueIterator connIter(result);
+   qDebug() << "Result :";
+   while(connIter.hasNext()) {
+      connIter.next();
+
+      // Next connection
+      connList.append(Connection());
+      Connection& conn = connList.last();
+      QScriptValueIterator iter(connIter.value());
+      qDebug() << " + Spojeni";
+      while(iter.hasNext()) {
+         iter.next();
+
+         // Transit list
+         if(iter.name() == "transits") {
+            QScriptValueIterator transIter(iter.value());
+            Connection::Transit transit;
+            while(transIter.hasNext()) {
+               transIter.next();
+
+               // Parse array
+               QScriptValue arr = transIter.value();
+               transit.from = arr.property(0).toString();
+               transit.mean = arr.property(1).toString();
+               transit.arrival = QTime::fromString(arr.property(2).toString(), "h:mm");
+               transit.departure = QTime::fromString(arr.property(3).toString(), "h:mm");
+
+               // Add transit
+               qDebug() << "   transit: " << transit.from << " " << transit.mean
+                     << transit.arrival.toString("h:mm") << " -> " << transit.departure.toString("h:mm");
+               conn.addTransit(transit);;
+            }
+            continue;
+         }
+
+         // String values
+         if(iter.value().isString()) {
+            conn.setValue(iter.name(), iter.value().toString());
+            qDebug() << "   param: " << iter.name()  << " = " << iter.value().toString();
+         }
+      }
+   }
+
+   return connList;
 }
