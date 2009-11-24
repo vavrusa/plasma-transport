@@ -113,17 +113,21 @@ void Transport::search(const QString &destination, const QDateTime &dt)
 
    // Create Http request
    QUrl url = d->service.url();
+   url.addQueryItem(d->service.key("date"), dt.date().toString("d.M.yyyy"));
+   url.addQueryItem(d->service.key("from"), d->home);
+   url.addQueryItem(d->service.key("to"), to);
+   url.addQueryItem(d->service.key("time"), dt.time().toString("h:mm"));
+
    QHttpRequestHeader header(d->service.method(), url.path());
    header.setValue("Host", url.host());
+   header.setValue("User-Agent", "Mozilla/5.0"); // We're not IE
+   header.setValue("Referer", url.host() + url.path());
    header.setContentType("application/x-www-form-urlencoded");
-   url.addQueryItem(d->service.param("date"), dt.date().toString("d.M.yyyy"));
-   url.addQueryItem(d->service.param("from"), d->home);
-   url.addQueryItem(d->service.param("to"), to);
-   url.addQueryItem(d->service.param("time"), dt.time().toString("h:mm"));
 
    // Query service
    d->http.setHost(url.host());
    d->connId = d->http.request(header, url.encodedQuery());
+   qDebug() << "Query: " << url.toString();
 }
 
 void Transport::searchResult(int id, bool error)
@@ -150,6 +154,11 @@ void Transport::searchResult(int id, bool error)
 
    // Parse result
    qDebug() << "Received: " << d->http.bytesAvailable() << " bytes";
+   QString data(d->http.readAll());
+   d->service.parse(data);
+
+   // Get results
+
 }
 
 void Transport::createConfigurationInterface(KConfigDialog *parent)
@@ -160,10 +169,10 @@ void Transport::createConfigurationInterface(KConfigDialog *parent)
    d->configUi.home->setText(d->home);
    
    // Fill services
-   Service serv;
    d->serviceMap.clear();
-   QStringList services = KGlobal::dirs()->findAllResources( "data", "plasma_engine_transport/services/*.xml" );
+   QStringList services = KGlobal::dirs()->findAllResources( "data", "plasma_engine_transport/services/*.js" );
    foreach(const QString& service, services) {
+      Service serv;
       if(serv.load(service)) {
          d->configUi.service->addItem(serv.name());
          d->serviceMap.insert(d->configUi.service->count() - 1, service);
@@ -196,10 +205,7 @@ void Transport::loadConfig()
    // Load config
    KConfigGroup configGroup = config();
    d->home = configGroup.readEntry("home");
-   if(d->service.load(configGroup.readEntry("service")))
-      d->service.parse();
-
-   qDebug() << "Config: from " << d->home << " (" << d->service.name() << ")";
+   d->service.load(configGroup.readEntry("service"));
 }
 
 #include "transport.moc"
