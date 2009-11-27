@@ -17,16 +17,16 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.         *
  ***************************************************************************/
 
+#include <QGraphicsLinearLayout>
+#include <QPainter>
+#include <KConfigDialog>
+#include <KStandardDirs>
 #include <Plasma/IconWidget>
 #include <Plasma/ScrollWidget>
 #include <Plasma/BusyWidget>
 #include <Plasma/PushButton>
 #include <Plasma/LineEdit>
 #include <Plasma/Label>
-#include <QGraphicsLinearLayout>
-#include <QPainter>
-#include <KConfigDialog>
-#include <KStandardDirs>
 #include <QHttp>
 #include <QMap>
 #include "transport.h"
@@ -155,10 +155,21 @@ void Transport::searchResult(int id, bool error)
    // Parse result
    qDebug() << "Received: " << d->http.bytesAvailable() << " bytes";
    QString data(d->http.readAll());
-   d->service.parse(data);
+   QList<Connection> list = d->service.parse(data);
 
    // Get results
-
+   QList<Connection>::iterator it;
+   for(it = list.begin(); it != list.end(); ++it) {
+       Plasma::Label* label = new Plasma::Label(this);
+       const Transit& start = it->transits().front();
+       const Transit& end = it->transits().back();
+       int duration = start.departs().secsTo(end.arrives());
+       label->setText(start.departs().toString("h:mm") + " " +
+                      start.from() + " - " +
+                      end.from() + " ("  +
+                      QTime().addSecs(duration).toString("h'h' m'm'") + ")");
+    d->resultLayout->addItem(label);
+   }
 }
 
 void Transport::createConfigurationInterface(KConfigDialog *parent)

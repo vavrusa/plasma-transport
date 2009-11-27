@@ -46,17 +46,37 @@ class Service
    Private *d;
 };
 
+// Transit structure
+class Transit {
+
+    public:
+    Transit(const QString& f = QString()) : mFrom(f)
+    {}
+
+    const QString& from() const { return mFrom; }
+    const QString& mean() const { return mMean; }
+    const QTime& arrives() const { return mArrives; }
+    const QTime& departs() const { return mDeparts; }
+
+    void setFrom(const QString& val)  { mFrom = val; }
+    void setMean(const QString& val)  { mMean = val; }
+    void setArrives(const QTime& val) { mArrives = val; }
+    void setDeparts(const QTime& val) { mDeparts = val; }
+
+    private:
+    QString     mFrom;
+    QString     mMean;
+    QTime    mArrives;
+    QTime    mDeparts;
+};
+
+
+// Connection
 class Connection {
 
    public:
-
-   // Transit structure
-   struct Transit {
-      QString    from;
-      QString    mean;
-      QTime   arrival;
-      QTime departure;
-   };
+   Connection()
+   {}
 
    // Transits
    const QList<Transit>& transits() {

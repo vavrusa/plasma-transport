@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 #include <QStringList>
+#include <QTextCodec>
 #include <QScriptEngine>
 #include <QScriptValueIterator>
 #include <QDebug>
@@ -114,6 +115,8 @@ QList<Connection> Service::parse(const QString& data)
    QScriptValue result = d->scriptObject.property("result");
    QScriptValueIterator connIter(result);
    qDebug() << "Result :";
+
+   // Parse result map
    while(connIter.hasNext()) {
       connIter.next();
 
@@ -121,31 +124,43 @@ QList<Connection> Service::parse(const QString& data)
       connList.append(Connection());
       Connection& conn = connList.last();
       QScriptValueIterator iter(connIter.value());
-      qDebug() << " + Spojeni";
+
+      // Prepare Connection parameters
+      QTextCodec* codec = QTextCodec::codecForName("UTF-8");
       while(iter.hasNext()) {
          iter.next();
 
          // Transit list
          if(iter.name() == "transits") {
+
+            // Iterate transits
             QScriptValueIterator transIter(iter.value());
-            Connection::Transit transit;
             while(transIter.hasNext()) {
-               transIter.next();
 
-               // Parse array
-               QScriptValue arr = transIter.value();
-               transit.from = arr.property(0).toString();
-               transit.mean = arr.property(1).toString();
-               transit.arrival = QTime::fromString(arr.property(2).toString(), "h:mm");
-               transit.departure = QTime::fromString(arr.property(3).toString(), "h:mm");
+               Transit transit;
+               while(transIter.hasNext()) {
+                  transIter.next();
 
-               // Add transit
-               qDebug() << "   transit: " << transit.from << " " << transit.mean
-                     << transit.arrival.toString("h:mm") << " -> " << transit.departure.toString("h:mm");
-               conn.addTransit(transit);;
+                  // Parse array
+                  QScriptValue arr = transIter.value();
+                  transit.setFrom(codec->toUnicode(arr.property(0).toString().toAscii()));
+                  transit.setMean(codec->toUnicode(arr.property(1).toString().toAscii()));
+                  transit.setArrives(QTime::fromString(arr.property(2).toString(), "h:mm"));
+                  transit.setDeparts(QTime::fromString(arr.property(3).toString(), "h:mm"));
+
+                  // Add transit
+                  qDebug() << "   transit: " << transit.from() << " " << transit.mean()
+                        << transit.arrives().toString("h:mm") << " -> " << transit.departs().toString("h:mm");
+                  conn.addTransit(transit);
+               }
             }
+
             continue;
          }
+
+         // Codec
+         if(iter.name() == "codepage")
+            codec = QTextCodec::codecForName(iter.value().toString().toLatin1());
 
          // String values
          if(iter.value().isString()) {
