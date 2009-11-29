@@ -25,7 +25,7 @@
 #include <QUrl>
 #include <QMap>
 
-class Connection;
+class Route;
 class Service
 {
    public:
@@ -39,7 +39,7 @@ class Service
 
    bool isLoaded();
    bool load(const QString& fileName);
-   QList<Connection> parse(const QString& data);
+   QList<Route> parse(const QString& data);
 
    private:
    struct Private;
@@ -72,10 +72,10 @@ class Transit {
 
 
 // Connection
-class Connection {
+class Route {
 
    public:
-   Connection()
+   Route()
    {}
 
    // Transits

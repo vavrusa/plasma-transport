@@ -135,7 +135,7 @@ void Transport::searchResult(int id, bool error)
    // Check current search only
    if(d->connId != id)
       return;
-   
+
    // Check error
    if(error) {
       qWarning("Http: error in response \'%d\'", id);
@@ -155,10 +155,10 @@ void Transport::searchResult(int id, bool error)
    // Parse result
    qDebug() << "Received: " << d->http.bytesAvailable() << " bytes";
    QString data(d->http.readAll());
-   QList<Connection> list = d->service.parse(data);
+   QList<Route> list = d->service.parse(data);
 
    // Get results
-   QList<Connection>::iterator it;
+   QList<Route>::iterator it;
    for(it = list.begin(); it != list.end(); ++it) {
        Plasma::Label* label = new Plasma::Label(this);
        const Transit& start = it->transits().front();
@@ -168,6 +168,7 @@ void Transport::searchResult(int id, bool error)
                       start.from() + " - " +
                       end.from() + " ("  +
                       QTime().addSecs(duration).toString("h'h' m'm'") + ")");
+
     d->resultLayout->addItem(label);
    }
 }
@@ -178,7 +179,7 @@ void Transport::createConfigurationInterface(KConfigDialog *parent)
    QWidget* configWidget = new QWidget(parent);
    d->configUi.setupUi(configWidget);
    d->configUi.home->setText(d->home);
-   
+
    // Fill services
    d->serviceMap.clear();
    QStringList services = KGlobal::dirs()->findAllResources( "data", "plasma_engine_transport/services/*.js" );

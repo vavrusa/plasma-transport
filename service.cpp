@@ -104,14 +104,14 @@ QString Service::key(const QString& k)
    return keyScript.call(d->scriptObject, QScriptValueList() << k).toString();
 }
 
-QList<Connection> Service::parse(const QString& data)
+QList<Route> Service::parse(const QString& data)
 {
    // Call script
    QScriptValue parseScript = d->scriptObject.property("parse");
    parseScript.call(d->scriptObject, QScriptValueList() << data);
 
    // Evaluate
-   QList<Connection> connList;
+   QList<Route> connList;
    QScriptValue result = d->scriptObject.property("result");
    QScriptValueIterator connIter(result);
    qDebug() << "Result :";
@@ -121,8 +121,8 @@ QList<Connection> Service::parse(const QString& data)
       connIter.next();
 
       // Next connection
-      connList.append(Connection());
-      Connection& conn = connList.last();
+      connList.append(Route());
+      Route& conn = connList.last();
       QScriptValueIterator iter(connIter.value());
 
       // Prepare Connection parameters
