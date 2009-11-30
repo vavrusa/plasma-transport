@@ -98,7 +98,12 @@ QString Service::method()
    return d->scriptObject.property("method").toString();
 }
 
-QString Service::key(const QString& k)
+QString Service::codepage()
+{
+   return d->scriptObject.property("codepage").toString();
+}
+
+QString Service::key(const QString& k, const QString& def)
 {
    QScriptValue keyScript = d->scriptObject.property("qmap");
    QScriptValueIterator i(keyScript);
@@ -108,7 +113,7 @@ QString Service::key(const QString& k)
          return i.value().toString();
    }
 
-   return QString();
+   return def;
 }
 
 QList<Route> Service::parse(const QString& data)
@@ -118,64 +123,64 @@ QList<Route> Service::parse(const QString& data)
    parseScript.call(d->scriptObject, QScriptValueList() << data);
 
    // Evaluate
-   QList<Route> connList;
+   QList<Route> routes;
    QScriptValue result = d->scriptObject.property("result");
-   QScriptValueIterator connIter(result);
+   QScriptValueIterator itRoute(result);
    qDebug() << "Result :";
 
-   // Parse result map
-   while(connIter.hasNext()) {
-      connIter.next();
+   // Get codepage
+   QString cp(codepage());
+   if(cp.isEmpty())
+      cp = "UTF-8";
 
-      // Next connection
-      connList.append(Route());
-      Route& conn = connList.last();
-      QScriptValueIterator iter(connIter.value());
+   // Parse result
+   QTextCodec* codec = QTextCodec::codecForName(cp.toLatin1());
+   while(itRoute.hasNext()) {
 
-      // Prepare Connection parameters
-      QTextCodec* codec = QTextCodec::codecForName("UTF-8");
-      while(iter.hasNext()) {
-         iter.next();
+      // Next route
+      itRoute.next();
+
+      // Create empty route
+      routes.append(Route());
+      Route& route = routes.last();
+      QScriptValueIterator it(itRoute.value());
+
+      // Parse parameters
+      qDebug() << " + Route:";
+      while(it.hasNext()) {
+         it.next();
 
          // Transit list
-         if(iter.name() == "transits") {
+         if(it.name() == "transits") {
 
             // Iterate transits
-            QScriptValueIterator transIter(iter.value());
-            while(transIter.hasNext()) {
+            Transit transit;
+            QScriptValueIterator itTrans(it.value());
+            while(itTrans.hasNext()) {
 
-               Transit transit;
-               while(transIter.hasNext()) {
-                  transIter.next();
+               // Next transit
+               itTrans.next();
 
-                  // Parse array
-                  QScriptValue arr = transIter.value();
-                  transit.setFrom(codec->toUnicode(arr.property(0).toString().toAscii()));
-                  transit.setMean(codec->toUnicode(arr.property(1).toString().toAscii()));
-                  transit.setArrives(QTime::fromString(arr.property(2).toString(), "h:mm"));
-                  transit.setDeparts(QTime::fromString(arr.property(3).toString(), "h:mm"));
+               // Parse array
+               QScriptValue arr = itTrans.value();
+               transit.setFrom(codec->toUnicode(arr.property(0).toString().toAscii()));
+               transit.setMean(codec->toUnicode(arr.property(1).toString().toAscii()));
+               transit.setArrives(QTime::fromString(arr.property(2).toString(), "h:mm"));
+               transit.setDeparts(QTime::fromString(arr.property(3).toString(), "h:mm"));
 
-                  // Add transit
-                  qDebug() << "   transit: " << transit.from() << " " << transit.mean()
-                        << transit.arrives().toString("h:mm") << " -> " << transit.departs().toString("h:mm");
-                  conn.addTransit(transit);
-               }
+               // Add transit
+               qDebug() << "  " << transit.from() << " " << transit.mean()
+               << transit.arrives().toString("h:mm") << " -> " << transit.departs().toString("h:mm");
+               route.addTransit(transit);
             }
-
-            continue;
          }
-
-         // Codec
-         if(iter.name() == "codepage")
-            codec = QTextCodec::codecForName(iter.value().toString().toLatin1());
-
-         // String values
-         if(iter.value().isString()) {
-            conn.setValue(iter.name(), iter.value().toString());
-            qDebug() << "   param: " << iter.name()  << " = " << iter.value().toString();
+         else {
+            // Values
+            route.setValue(it.name(), it.value().toString());
+            qDebug() << "   (" << it.name()  << ": " << it.value().toString() << ")";
          }
       }
    }
 
-   return connList;
+   return routes;
 }

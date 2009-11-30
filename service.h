@@ -35,7 +35,8 @@ class Service
    QString name();
    QUrl url();
    QString method();
-   QString key(const QString& key);
+   QString codepage();
+   QString key(const QString& key, const QString& def = QString());
 
    bool isLoaded();
    bool load(const QString& fileName);

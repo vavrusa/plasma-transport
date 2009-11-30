@@ -8,6 +8,7 @@ var Service = {
            'from' : 'FromStn',
            'to'   : 'ToStn'
    },
+   codepage: 'Windows-1250',
    result: null,
 
    parse: function(html) {
@@ -49,8 +50,7 @@ var Service = {
                         arrivs.pop(), '']);
 
          // Push new transit
-         this.result.push({ 'codepage' : 'Windows-1250',
-                            'date'     : date,
+         this.result.push({ 'date'     : date,
                             'transits' : transits
                           });
 
