@@ -27,9 +27,7 @@
 #include <Plasma/IconWidget>
 #include <Plasma/TreeView>
 #include <Plasma/BusyWidget>
-#include <Plasma/PushButton>
 #include <Plasma/LineEdit>
-#include <Plasma/Label>
 #include <QHttp>
 #include <QMap>
 #include "transport.h"
@@ -56,7 +54,7 @@ struct Transport::Private
 
    // Widgets
    Plasma::LineEdit* searchLine;
-   Plasma::PushButton* searchButton;
+   Plasma::IconWidget* searchButton;
    Plasma::TreeView* dataView;
    QStandardItemModel* dataModel;
    Ui::config configUi;
@@ -91,8 +89,8 @@ void Transport::init()
    searchLayout->addItem(d->searchLine);
 
    // Search submit button
-   d->searchButton = new Plasma::PushButton(this);
-   d->searchButton->setText(tr("Search"));
+   d->searchButton = new Plasma::IconWidget(this);
+   d->searchButton->setIcon("page-zoom");
    connect(d->searchButton, SIGNAL(clicked()), this, SLOT(search()));
    searchLayout->addItem(d->searchButton);
    layout->addItem(searchLayout);
@@ -133,6 +131,12 @@ void Transport::search(const QString &destination, const QDateTime &dt)
    QString to(destination);
    if(to.isEmpty())
       to = d->searchLine->text();
+
+   // If search line is empty, focus
+   if(to.isEmpty()) {
+      d->searchLine->setFocus();
+      return;
+   }
 
    // Create Http request
    QUrl url = d->service.url();
@@ -247,6 +251,9 @@ void Transport::loadConfig()
 
    // Update text edit
    d->searchLine->nativeWidget()->setClickMessage(tr("Search from ") + d->home);
+
+   // Update focus
+   d->searchLine->setFocus();
 }
 
 #include "transport.moc"
