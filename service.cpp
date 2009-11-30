@@ -83,24 +83,11 @@ bool Service::load(const QString& fileName)
    return d->isLoaded;
 }
 
-QString Service::name()
+QVariant Service::property(const QString& key)
 {
-   return d->scriptObject.property("name").toString();
-}
-
-QUrl Service::url()
-{
-   return QUrl(d->scriptObject.property("url").toString());
-}
-
-QString Service::method()
-{
-   return d->scriptObject.property("method").toString();
-}
-
-QString Service::codepage()
-{
-   return d->scriptObject.property("codepage").toString();
+   if(!isLoaded())
+      return QVariant();
+   return d->scriptObject.property(key).toVariant();
 }
 
 QString Service::key(const QString& k, const QString& def)

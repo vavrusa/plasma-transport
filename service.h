@@ -32,15 +32,24 @@ class Service
    Service(const QString& fileName = QString());
    ~Service();
 
-   QString name();
-   QUrl url();
-   QString method();
-   QString codepage();
+   // Script management
+   bool load(const QString& fileName);
+   bool isLoaded();
+
+   // Properties
+   QString name()     { return property("name").toString(); }
+   QUrl url()    { return QUrl(property("url").toString()); }
+   QString method()   { return property("method").toString(); }
+   QString codepage() { return property("codepage").toString(); }
+
+   // Query
    QString key(const QString& key, const QString& def = QString());
 
-   bool isLoaded();
-   bool load(const QString& fileName);
+   // Result
    QList<Route> parse(const QString& data);
+
+   protected:
+   QVariant property(const QString& key);
 
    private:
    struct Private;
