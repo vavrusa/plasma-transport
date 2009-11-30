@@ -57,7 +57,7 @@ void RouteDelegate::paint(QPainter* p, const QStyleOptionViewItem& option, const
 
    // Draw text
    if(index.data(TextRole).isValid()) {
-      p->drawText(option.rect, Qt::AlignCenter, index.data(FormattedTextRole).toString());
+      p->drawText(option.rect, Qt::AlignCenter, index.data(TextRole).toString());
    }
 }
 

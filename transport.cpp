@@ -180,6 +180,7 @@ void Transport::searchResult(int id, bool error)
    QList<Route> list = d->service.parse(data);
 
    // Get results
+   d->dataModel->clear();
    QList<Route>::iterator it;
    for(it = list.begin(); it != list.end(); ++it) {
        QStandardItem* item = new QStandardItem();
@@ -190,8 +191,8 @@ void Transport::searchResult(int id, bool error)
                      start.from() + " - " +
                      end.from() + " ("  +
                      QTime().addSecs(duration).toString("h'h' m'm'") + ")",
-                     RouteDelegate::FormattedTextRole);
-       item->setData(true, RouteDelegate::TextBackgroundRole);
+                     RouteDelegate::TextRole);
+       item->setData(true, RouteDelegate::FrameRole);
 
       d->dataModel->appendRow(item);
    }

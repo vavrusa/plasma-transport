@@ -100,8 +100,15 @@ QString Service::method()
 
 QString Service::key(const QString& k)
 {
-   QScriptValue keyScript = d->scriptObject.property("key");
-   return keyScript.call(d->scriptObject, QScriptValueList() << k).toString();
+   QScriptValue keyScript = d->scriptObject.property("qmap");
+   QScriptValueIterator i(keyScript);
+   while(i.hasNext()) {
+      i.next();
+      if(i.name() == k)
+         return i.value().toString();
+   }
+
+   return QString();
 }
 
 QList<Route> Service::parse(const QString& data)
