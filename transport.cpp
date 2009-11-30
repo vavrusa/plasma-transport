@@ -23,6 +23,7 @@
 #include <QPainter>
 #include <KConfigDialog>
 #include <KStandardDirs>
+#include <KLineEdit>
 #include <Plasma/IconWidget>
 #include <Plasma/TreeView>
 #include <Plasma/BusyWidget>
@@ -221,7 +222,7 @@ void Transport::createConfigurationInterface(KConfigDialog *parent)
    // Create page
    connect(parent, SIGNAL(okClicked()), this, SLOT(configAccepted()));
    parent->setButtons(KDialog::Ok | KDialog::Cancel);
-   parent->addPage(configWidget, i18n("Configuration"), icon());
+   parent->addPage(configWidget, tr("Configuration"), icon());
 }
 
 void Transport::configAccepted()
@@ -243,6 +244,9 @@ void Transport::loadConfig()
    KConfigGroup configGroup = config();
    d->home = configGroup.readEntry("home");
    d->service.load(configGroup.readEntry("service"));
+
+   // Update text edit
+   d->searchLine->nativeWidget()->setClickMessage(tr("Search from ") + d->home);
 }
 
 #include "transport.moc"
