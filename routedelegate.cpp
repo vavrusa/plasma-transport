@@ -72,6 +72,14 @@ void RouteDelegate::paint(QPainter* p, const QStyleOptionViewItem& option, const
    if(index.data(Qt::TextAlignmentRole).isValid())
       alignFlags |= index.data(Qt::TextAlignmentRole).toInt();
 
+   // Efficiency
+   if(index.data(EfficiencyRole).isValid()) {
+      qreal ratio = index.data(EfficiencyRole).toReal();
+      QPen pen(p->pen());
+      pen.setColor(QColor(128 * ratio, 128 * (1.0 - ratio), 0));
+      p->setPen(pen);
+   }
+
    // Draw global text
    int margin = option.fontMetrics.averageCharWidth();
    QRect contentsRect(option.rect);

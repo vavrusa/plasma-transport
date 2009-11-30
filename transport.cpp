@@ -220,8 +220,21 @@ void Transport::searchResult(int id, bool error)
    }
    else {
 
-      // Update model
+      // Calculate route efficiency
       QList<Route>::iterator it;
+      int shortest = INT_MAX, longest = 0;
+      for(it = list.begin(); it != list.end(); ++it) {
+         const Transit& src = it->transits().front();
+         const Transit& dst = it->transits().back();
+         int duration = src.departs().secsTo(dst.arrives());
+         if(duration > longest)
+            longest = duration;
+         if(duration < shortest)
+            shortest = duration;
+      }
+      qreal ratio = 1.0 / (qreal)(longest - shortest);
+
+      // Update model
       for(it = list.begin(); it != list.end(); ++it) {
 
          // Prepare route
@@ -235,6 +248,7 @@ void Transport::searchResult(int id, bool error)
                                        dst.arrives().toString("h:mm")));
          cols.append(new QStandardItem(src.from() + " - " + dst.from()));
          cols.append(new QStandardItem(QTime().addSecs(duration).toString("h'h' m'm'")));
+         cols.back()->setData((duration - shortest) * ratio, RouteDelegate::EfficiencyRole);
          d->dataModel->appendRow(cols);
       }
    }
