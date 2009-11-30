@@ -22,7 +22,7 @@ var Service = {
 
          // Find matches
          var arr = null;
-         var date  = str.match(/\d{2}\.\d{2}\./);
+         var date  = str.match(/\d{1,2}\.\d{1,2}\./);
          arr = str.match(/\d+\:\d+/g);
          var arrivs = arr.slice(0, arr.length / 2).reverse();
          var departs = arr.slice(arr.length / 2, arr.length).reverse();
