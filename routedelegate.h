@@ -29,7 +29,8 @@ class RouteDelegate : public QItemDelegate
 
    enum SpecificRoles {
       NoFrameRole    = Qt::UserRole + 1, // No frame
-      EfficiencyRole = Qt::UserRole + 2  // Route efficiency (based on length)
+      EfficiencyRole = Qt::UserRole + 2, // Route efficiency (based on length)
+      EmphasisRole   = Qt::UserRole + 3  // Emphasis line role
    };
 
    QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index ) const;

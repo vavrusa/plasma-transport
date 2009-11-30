@@ -81,11 +81,37 @@ void RouteDelegate::paint(QPainter* p, const QStyleOptionViewItem& option, const
    }
 
    // Draw global text
-   int margin = option.fontMetrics.averageCharWidth();
-   QRect contentsRect(option.rect);
-   contentsRect.adjust(margin,0,-margin,0);
    if(index.data(Qt::DisplayRole).isValid()) {
-      p->drawText(contentsRect, alignFlags, index.data(Qt::DisplayRole).toString());
+
+      // Count lines
+      int margin = option.fontMetrics.averageCharWidth();
+      int i = -1, lines = 1;
+      QString text(index.data(Qt::DisplayRole).toString());
+      while((i = text.indexOf('\n', i + 1)) != -1)
+         ++lines;
+
+      // Update contents rect
+      QRect contentsRect(option.rect);
+      contentsRect.adjust(margin, margin * 0.5, -margin, -margin * 0.5);
+      contentsRect.setHeight(contentsRect.height() / lines);
+
+      // Draw lines
+      i = -1;
+      for(int i = 0; i < lines; ++i) {
+
+         // Update font
+         if(index.data(EmphasisRole).isValid()) {
+            QFont font(p->font());
+            font.setBold(i + 1 == index.data(EmphasisRole).toInt());
+            p->setFont(font);
+         }
+
+         // Draw line
+         int k = text.indexOf('\n');
+         p->drawText(contentsRect, alignFlags, text.left(k));
+         contentsRect.moveTop(contentsRect.top() + contentsRect.height());
+         text.remove(0, k + 1);
+      }
    }
 
    // Restore painter
@@ -111,8 +137,8 @@ QSize RouteDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIn
    }
 
    QSize size = QItemDelegate::sizeHint(option, index);
-   size.setHeight( 2 * option.fontMetrics.height() + 4);
-   size.setWidth(option.fontMetrics.averageCharWidth() * 2 + maxw);
+   size.setHeight( 2.4 * option.fontMetrics.height());
+   size.setWidth(option.fontMetrics.averageCharWidth() * 3 + maxw);
    return size;
 }
 

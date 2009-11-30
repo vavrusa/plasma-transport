@@ -244,8 +244,9 @@ void Transport::searchResult(int id, bool error)
 
          // Create columns
          QList<QStandardItem*> cols;
-         cols.append(new QStandardItem(src.departs().toString("h:mm") + "\n" +
-                                       dst.arrives().toString("h:mm")));
+         cols.append(new QStandardItem(src.departs().toString("hh:mm") + "\n" +
+                                       dst.arrives().toString("hh:mm")));
+         cols.back()->setData(1, RouteDelegate::EmphasisRole);
          cols.append(new QStandardItem(src.from() + " - " + dst.from()));
          cols.append(new QStandardItem(QTime().addSecs(duration).toString("h'h' m'm'")));
          cols.back()->setData((duration - shortest) * ratio, RouteDelegate::EfficiencyRole);
