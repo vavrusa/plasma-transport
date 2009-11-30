@@ -13,7 +13,6 @@ var Service = {
 
    parse: function(html) {
 
-      // Clear result
       this.result = new Array();
       var i = html.indexOf('<tr valign="top">');
       while(i != -1) {
@@ -27,7 +26,7 @@ var Service = {
          arr = str.match(/\d+\:\d+/g);
          var arrivs = arr.slice(0, arr.length / 2).reverse();
          var departs = arr.slice(arr.length / 2, arr.length).reverse();
-         arr = str.match(/([^\<\>]+)(?=\<\/a\>)/g);
+         arr = str.match(/([^\d^:^>^\.]+)([^>^;]+)(?=\<\/\w{1,2}\>)/g);
          var stations = arr.slice(0, arr.length / 2 + 1).reverse();
          var trains = arr.slice(arr.length / 2 + 1, arr.length).reverse();
 

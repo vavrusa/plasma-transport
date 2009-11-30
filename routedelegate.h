@@ -28,8 +28,7 @@ class RouteDelegate : public QItemDelegate
    ~RouteDelegate();
 
    enum SpecificRoles {
-       RouteRole =  Qt::UserRole + 1, // Associated route
-       FrameRole = Qt::UserRole + 2,  // Custom SVG frame
+      NoFrameRole    = Qt::UserRole + 1 // No frame
    };
 
    QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index ) const;

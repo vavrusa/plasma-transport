@@ -26,24 +26,24 @@ class Transport : public Plasma::Applet
 {
    Q_OBJECT
    public:
-        Transport(QObject *parent, const QVariantList &args);
-        ~Transport();
+      Transport(QObject *parent, const QVariantList &args);
+      ~Transport();
 
    public slots:
-        void init();
-        void search(const QString& destination = QString(), const QDateTime& dt = QDateTime::currentDateTime());
+      void init();
+      void search(const QString& destination = QString(), const QDateTime& dt = QDateTime::currentDateTime());
 
-     protected slots:
-        void loadConfig();
-        void configAccepted();
-        void searchResult(int id, bool error);
+   protected slots:
+      void loadConfig();
+      void configAccepted();
+      void searchResult(int id, bool error);
 
    protected:
-        void createConfigurationInterface(KConfigDialog *parent);
+      void createConfigurationInterface(KConfigDialog *parent);
 
    private:
-        struct Private;
-        Private *d;
+      struct Private;
+      Private *d;
 };
 
 K_EXPORT_PLASMA_APPLET(transport, Transport)

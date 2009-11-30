@@ -45,8 +45,18 @@ RouteDelegate::~RouteDelegate()
 void RouteDelegate::drawBackground(QPainter* p, const QStyleOptionViewItem& option, const QModelIndex& index ) const
 {
    // Text background
-   if(index.data(FrameRole).isValid()) {
+   if(!index.data(NoFrameRole).isValid()) {
       d->svg->resizeFrame(option.rect.size());
+
+      // Check column count
+      if(index.model()->columnCount() > 1) {
+         d->svg->setEnabledBorders(Plasma::FrameSvg::TopBorder | Plasma::FrameSvg::BottomBorder);
+         if(index.column() == 0)
+            d->svg->setEnabledBorders(d->svg->enabledBorders() | Plasma::FrameSvg::LeftBorder);
+         if(index.column() == index.model()->columnCount() - 1)
+            d->svg->setEnabledBorders(d->svg->enabledBorders() | Plasma::FrameSvg::RightBorder);
+         }
+
       d->svg->paintFrame(p, option.rect.topLeft());
    }
 }
@@ -55,33 +65,46 @@ void RouteDelegate::paint(QPainter* p, const QStyleOptionViewItem& option, const
 {
    // Draw background
    drawBackground(p, option, index);
+   p->save();
 
-   // Draw text
-   if(index.data(RouteRole).isValid()) {
-      Route route = index.data(RouteRole).value<Route>();
-
-      const Transit& start = route.transits().front();
-      const Transit& end = route.transits().back();
-      int duration = start.departs().secsTo(end.arrives());
-
-      QString text(start.departs().toString("h:mm") + " " +
-      start.from() + " - " +
-      end.from() + " ("  +
-      QTime().addSecs(duration).toString("h'h' m'm'") + ")");
-
-      p->drawText(option.rect, Qt::AlignCenter, text);
-   }
+   // Alignment
+   int alignFlags = Qt::AlignVCenter;
+   if(index.data(Qt::TextAlignmentRole).isValid())
+      alignFlags |= index.data(Qt::TextAlignmentRole).toInt();
 
    // Draw global text
+   int margin = option.fontMetrics.averageCharWidth();
+   QRect contentsRect(option.rect);
+   contentsRect.adjust(margin,0,-margin,0);
    if(index.data(Qt::DisplayRole).isValid()) {
-      p->drawText(option.rect, Qt::AlignCenter, index.data(Qt::DisplayRole).toString());
+      p->drawText(contentsRect, alignFlags, index.data(Qt::DisplayRole).toString());
    }
+
+   // Restore painter
+   p->restore();
 }
 
 QSize RouteDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    QSize size = QItemDelegate::sizeHint(option, index);
-    size.setHeight( 3 * option.fontMetrics.height());
-    return size;
+   QString text(index.data(Qt::DisplayRole).toString());
+
+   // Get longest line
+   int i = -1, maxw = 0;
+   while((i = text.indexOf('\n', i + 1)) != -1) {
+      int w = option.fontMetrics.width(text.left(i));
+      text.remove(0, i);
+      if(w > maxw)
+         maxw = w;
+   }
+
+   // Last attempt to measure line
+   if(maxw == 0) {
+      maxw = option.fontMetrics.width(text);
+   }
+
+   QSize size = QItemDelegate::sizeHint(option, index);
+   size.setHeight( 2 * option.fontMetrics.height() + 4);
+   size.setWidth(option.fontMetrics.averageCharWidth() * 2 + maxw);
+   return size;
 }
 

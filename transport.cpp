@@ -66,7 +66,7 @@ Transport::Transport(QObject *parent, const QVariantList &args)
    // Plasmoid defaults
    setAspectRatioMode(Plasma::IgnoreAspectRatio);
    setBackgroundHints(DefaultBackground);
-   resize(320, 250);
+   resize(340, 250);
 }
 
 
@@ -103,7 +103,7 @@ void Transport::init()
    layout->addItem(searchLayout);
 
    // Create results model and view
-   d->dataModel = new QStandardItemModel(0, 1, this);
+   d->dataModel = new QStandardItemModel(0, 3, this);
    d->dataView = new Plasma::TreeView(this);
    d->dataView->setModel(d->dataModel);
    d->dataView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -113,8 +113,9 @@ void Transport::init()
    view->setItemDelegate(new RouteDelegate());
    view->setRootIsDecorated(false); // No indentation line
    view->setHeaderHidden(true);
-   view->setWordWrap(true);
    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+   view->setAnimated(true);
+   view->header()->setResizeMode(QHeaderView::ResizeToContents);
 
    // Set transparent background
    QPalette pal = palette();
@@ -187,8 +188,11 @@ void Transport::searchResult(int id, bool error)
 
    // Check error
    if(error) {
+      QStandardItem* item = new QStandardItem(tr("Could not connect to service %1.")
+                                              .arg(d->service.name()));
+      item->setTextAlignment(Qt::AlignCenter);
       d->dataModel->clear();
-      d->dataModel->appendRow(new QStandardItem(tr("No results.")));
+      d->dataModel->appendRow(item);
       return;
    }
 
@@ -209,13 +213,30 @@ void Transport::searchResult(int id, bool error)
 
    // Update model
    d->dataModel->clear();
-   QList<Route>::iterator it;
-   for(it = list.begin(); it != list.end(); ++it) {
-       QStandardItem* item = new QStandardItem();
-       item->setData(QVariant::fromValue(*it), RouteDelegate::RouteRole);
-       item->setData(true, RouteDelegate::FrameRole);
-
+   if(list.empty()) {
+      QStandardItem* item = new QStandardItem(tr("No results."));
+      item->setTextAlignment(Qt::AlignCenter);
       d->dataModel->appendRow(item);
+   }
+   else {
+
+      // Update model
+      QList<Route>::iterator it;
+      for(it = list.begin(); it != list.end(); ++it) {
+
+         // Prepare route
+         const Transit& src = it->transits().front();
+         const Transit& dst = it->transits().back();
+         int duration = src.departs().secsTo(dst.arrives());
+
+         // Create columns
+         QList<QStandardItem*> cols;
+         cols.append(new QStandardItem(src.departs().toString("h:mm") + "\n" +
+                                       dst.arrives().toString("h:mm")));
+         cols.append(new QStandardItem(src.from() + " - " + dst.from()));
+         cols.append(new QStandardItem(QTime().addSecs(duration).toString("h'h' m'm'")));
+         d->dataModel->appendRow(cols);
+      }
    }
 }
 
