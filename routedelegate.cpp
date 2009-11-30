@@ -46,6 +46,8 @@ void RouteDelegate::drawBackground(QPainter* p, const QStyleOptionViewItem& opti
 {
    // Text background
    if(!index.data(NoFrameRole).isValid()) {
+
+      // Resize frame
       d->svg->resizeFrame(option.rect.size());
 
       // Check column count
@@ -55,7 +57,21 @@ void RouteDelegate::drawBackground(QPainter* p, const QStyleOptionViewItem& opti
             d->svg->setEnabledBorders(d->svg->enabledBorders() | Plasma::FrameSvg::LeftBorder);
          if(index.column() == index.model()->columnCount() - 1)
             d->svg->setEnabledBorders(d->svg->enabledBorders() | Plasma::FrameSvg::RightBorder);
-         }
+      }
+
+      // Draw hover background
+      if (option.state & (QStyle::State_Selected | QStyle::State_MouseOver)) {
+
+         // Adjust by margin size
+         QRectF rect(option.rect);
+         rect.adjust(d->svg->marginSize(Plasma::LeftMargin) * 0.5, d->svg->marginSize(Plasma::TopMargin) * 0.5,
+                     -d->svg->marginSize(Plasma::RightMargin) * 0.5, -d->svg->marginSize(Plasma::BottomMargin) * 0.5);
+
+         // Fill base layer
+         p->setOpacity(0.4);
+         p->fillRect(rect, option.palette.highlight());
+         p->setOpacity(1.0);
+      }
 
       d->svg->paintFrame(p, option.rect.topLeft());
    }

@@ -107,15 +107,16 @@ void Transport::init()
    d->dataView = new Plasma::TreeView(this);
    d->dataView->setModel(d->dataModel);
    d->dataView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+   d->dataView->setFocusProxy(d->searchLine);
 
    // Set QTreeView properties
    QTreeView* view = d->dataView->nativeWidget();
+   view->header()->setResizeMode(QHeaderView::ResizeToContents);
    view->setItemDelegate(new RouteDelegate());
    view->setRootIsDecorated(false); // No indentation line
-   view->setHeaderHidden(true);
+   view->setHeaderHidden(true); // Hide header
    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
    view->setAnimated(true);
-   view->header()->setResizeMode(QHeaderView::ResizeToContents);
 
    // Set transparent background
    QPalette pal = palette();
@@ -155,8 +156,9 @@ void Transport::search(const QString &destination, const QDateTime &dt)
       // Prefix len: 3 ("at ")
       k = to.indexOf(" ", i + 3);
       if(k < 0) k = to.size();
+
+      // Replace time and remove keyword match
       time = to.mid(i + 3, k - (i + 3));
-      qDebug() << " remove " << i << " -> " << k - i << " strlen " << to.size();
       to.remove(i, k - i);
 
    }
@@ -224,14 +226,20 @@ void Transport::searchResult(int id, bool error)
       QList<Route>::iterator it;
       int shortest = INT_MAX, longest = 0;
       for(it = list.begin(); it != list.end(); ++it) {
+
+         // Calculate route duration
          const Transit& src = it->transits().front();
          const Transit& dst = it->transits().back();
          int duration = src.departs().secsTo(dst.arrives());
+
+         // Keep shortest/longest
          if(duration > longest)
             longest = duration;
          if(duration < shortest)
             shortest = duration;
       }
+
+      // Ratio as inverse difference
       qreal ratio = 1.0 / (qreal)(longest - shortest);
 
       // Update model
@@ -244,10 +252,16 @@ void Transport::searchResult(int id, bool error)
 
          // Create columns
          QList<QStandardItem*> cols;
+
+         // Depart / Arrive
          cols.append(new QStandardItem(src.departs().toString("hh:mm") + "\n" +
                                        dst.arrives().toString("hh:mm")));
          cols.back()->setData(1, RouteDelegate::EmphasisRole);
+
+         // Stations
          cols.append(new QStandardItem(src.from() + " - " + dst.from()));
+
+         // Duration
          cols.append(new QStandardItem(QTime().addSecs(duration).toString("h'h' m'm'")));
          cols.back()->setData((duration - shortest) * ratio, RouteDelegate::EfficiencyRole);
          d->dataModel->appendRow(cols);
@@ -292,6 +306,9 @@ void Transport::configAccepted()
 
    // Reload config
    loadConfig();
+
+   // Set focus to search line
+   d->searchLine->setFocus();
 }
 
 void Transport::loadConfig()
@@ -303,9 +320,6 @@ void Transport::loadConfig()
 
    // Update text edit
    d->searchLine->nativeWidget()->setClickMessage(tr("Search from ") + d->home);
-
-   // Update focus
-   d->searchLine->setFocus();
 }
 
 #include "transport.moc"
