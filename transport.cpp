@@ -64,6 +64,7 @@ Transport::Transport(QObject *parent, const QVariantList &args)
    : Plasma::Applet(parent, args), d(new Private)
 {
    // Plasmoid defaults
+   setAspectRatioMode(Plasma::IgnoreAspectRatio);
    setBackgroundHints(DefaultBackground);
    resize(320, 250);
 }
