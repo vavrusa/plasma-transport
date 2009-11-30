@@ -187,7 +187,8 @@ void Transport::searchResult(int id, bool error)
 
    // Check error
    if(error) {
-      qWarning("Http: error in response \'%d\'", id);
+      d->dataModel->clear();
+      d->dataModel->appendRow(new QStandardItem(tr("No results.")));
       return;
    }
 
@@ -206,19 +207,12 @@ void Transport::searchResult(int id, bool error)
    QString data(d->http.readAll());
    QList<Route> list = d->service.parse(data);
 
-   // Get results
+   // Update model
    d->dataModel->clear();
    QList<Route>::iterator it;
    for(it = list.begin(); it != list.end(); ++it) {
        QStandardItem* item = new QStandardItem();
-       const Transit& start = it->transits().front();
-       const Transit& end = it->transits().back();
-       int duration = start.departs().secsTo(end.arrives());
-       item->setData(start.departs().toString("h:mm") + " " +
-                     start.from() + " - " +
-                     end.from() + " ("  +
-                     QTime().addSecs(duration).toString("h'h' m'm'") + ")",
-                     RouteDelegate::TextRole);
+       item->setData(QVariant::fromValue(*it), RouteDelegate::RouteRole);
        item->setData(true, RouteDelegate::FrameRole);
 
       d->dataModel->appendRow(item);

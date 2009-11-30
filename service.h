@@ -105,4 +105,6 @@ class Route {
    QList<Transit> mTransits;
 };
 
+Q_DECLARE_METATYPE(Route)
+
 #endif // SERVICE_H

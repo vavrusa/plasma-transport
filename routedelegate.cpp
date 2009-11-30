@@ -21,6 +21,7 @@
 #include <QPainter>
 #include <Plasma/FrameSvg>
 #include "routedelegate.h"
+#include "service.h"
 
 class RouteDelegate::Private
 {
@@ -56,8 +57,24 @@ void RouteDelegate::paint(QPainter* p, const QStyleOptionViewItem& option, const
    drawBackground(p, option, index);
 
    // Draw text
-   if(index.data(TextRole).isValid()) {
-      p->drawText(option.rect, Qt::AlignCenter, index.data(TextRole).toString());
+   if(index.data(RouteRole).isValid()) {
+      Route route = index.data(RouteRole).value<Route>();
+
+      const Transit& start = route.transits().front();
+      const Transit& end = route.transits().back();
+      int duration = start.departs().secsTo(end.arrives());
+
+      QString text(start.departs().toString("h:mm") + " " +
+      start.from() + " - " +
+      end.from() + " ("  +
+      QTime().addSecs(duration).toString("h'h' m'm'") + ")");
+
+      p->drawText(option.rect, Qt::AlignCenter, text);
+   }
+
+   // Draw global text
+   if(index.data(Qt::DisplayRole).isValid()) {
+      p->drawText(option.rect, Qt::AlignCenter, index.data(Qt::DisplayRole).toString());
    }
 }
 

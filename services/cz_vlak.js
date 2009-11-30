@@ -14,10 +14,10 @@ var Service = {
 
       // Clear result
       this.result = new Array();
-      var i = html.indexOf("<tr valign=\"top\">");
+      var i = html.indexOf('<tr valign="top">');
       while(i != -1) {
          // Find block
-         var end = html.indexOf("</tr>", i + 1);
+         var end = html.indexOf('</tr>', i + 1);
          var str = html.substr(i, end - i);
 
          // Find matches
@@ -38,28 +38,25 @@ var Service = {
 
          // Station, Train, Arrival, Departure
          transits.push([stations.pop(), trains.pop(),
-                        "", departs.pop()]);
+                        '', departs.pop()]);
 
          while(departs.length > 0) {
             transits.push([stations.pop(), trains.pop(),
                            arrivs.pop(), departs.pop()]);
          }
 
-         transits.push([stations.pop(), "",
-                        arrivs.pop(), ""]);
+         transits.push([stations.pop(), '',
+                        arrivs.pop(), '']);
 
          // Push new transit
-         this.result.push({ "codepage" : "Windows-1250",
-                            "date"     : date,
-                            "transits" : transits
+         this.result.push({ 'codepage' : 'Windows-1250',
+                            'date'     : date,
+                            'transits' : transits
                           });
 
 
          // Next block
-         i = html.indexOf("<tr valign=\"top\">", end)
+         i = html.indexOf('<tr valign="top">', end)
       }
-
-      // Dump array
-      print(this.result);
    }
 }
