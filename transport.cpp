@@ -89,6 +89,12 @@ void Transport::init()
    connect(d->searchLine, SIGNAL(returnPressed()), this, SLOT(search()));
    searchLayout->addItem(d->searchLine);
 
+   // Show hint
+   QString hint(tr("Search: [keywords] station [keywords]\n"));
+   hint.append(tr("Keywords: \n"));
+   hint.append(tr("  \"at h:mm\" ... set departure time to h:mm (ex.: praha at 12:00)\n"));
+   d->searchLine->setToolTip(hint);
+
    // Search submit button
    d->searchButton = new Plasma::IconWidget(this);
    d->searchButton->setIcon("page-zoom");
@@ -139,12 +145,27 @@ void Transport::search(const QString &destination, const QDateTime &dt)
       return;
    }
 
+   // Parse "to" as query
+   int i = 0, k = 0;
+
+   // Departure time (keyword: "at h:mm")
+   QString time(dt.time().toString("h:mm"));
+   if((i = to.indexOf(QRegExp("at (\\d+)[\\.\\:]\\d{2}"))) != -1) {
+      // Prefix len: 3 ("at ")
+      k = to.indexOf(" ", i + 3);
+      if(k < 0) k = to.size();
+      time = to.mid(i + 3, k - (i + 3));
+      qDebug() << " remove " << i << " -> " << k - i << " strlen " << to.size();
+      to.remove(i, k - i);
+
+   }
+
    // Create Http request
    QUrl url = d->service.url();
    url.addQueryItem(d->service.key("date"), dt.date().toString("d.M.yyyy"));
    url.addQueryItem(d->service.key("from"), d->home);
-   url.addQueryItem(d->service.key("to"), to);
-   url.addQueryItem(d->service.key("time"), dt.time().toString("h:mm"));
+   url.addQueryItem(d->service.key("to"), to.trimmed());
+   url.addQueryItem(d->service.key("time"), time);
 
    QHttpRequestHeader header(d->service.method(), url.path());
    header.setValue("Host", url.host());
