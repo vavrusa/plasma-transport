@@ -18,11 +18,13 @@
  ***************************************************************************/
 
 #include <QGraphicsLinearLayout>
+#include <QStandardItemModel>
+#include <QTreeView>
 #include <QPainter>
 #include <KConfigDialog>
 #include <KStandardDirs>
 #include <Plasma/IconWidget>
-#include <Plasma/ScrollWidget>
+#include <Plasma/TreeView>
 #include <Plasma/BusyWidget>
 #include <Plasma/PushButton>
 #include <Plasma/LineEdit>
@@ -31,6 +33,7 @@
 #include <QMap>
 #include "transport.h"
 #include "service.h"
+#include "routedelegate.h"
 #include "ui_config.h"
 
 // State tracking
@@ -53,7 +56,8 @@ struct Transport::Private
    // Widgets
    Plasma::LineEdit* searchLine;
    Plasma::PushButton* searchButton;
-   QGraphicsLinearLayout* resultLayout;
+   Plasma::TreeView* dataView;
+   QStandardItemModel* dataModel;
    Ui::config configUi;
 };
 
@@ -62,7 +66,7 @@ Transport::Transport(QObject *parent, const QVariantList &args)
 {
    // Plasmoid defaults
    setBackgroundHints(DefaultBackground);
-   resize(300, 250);
+   resize(320, 250);
 }
 
 
@@ -75,12 +79,14 @@ void Transport::init()
 {
    // Create main layout
    QGraphicsLinearLayout* layout = new QGraphicsLinearLayout(Qt::Vertical, this);
+   layout->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
    // Create search layout
    QGraphicsLinearLayout* searchLayout = new QGraphicsLinearLayout(Qt::Horizontal, layout);
 
    // Search direction line
    d->searchLine = new Plasma::LineEdit(this);
+   connect(d->searchLine, SIGNAL(returnPressed()), this, SLOT(search()));
    searchLayout->addItem(d->searchLine);
 
    // Search submit button
@@ -90,12 +96,28 @@ void Transport::init()
    searchLayout->addItem(d->searchButton);
    layout->addItem(searchLayout);
 
-   // Create results layout
-   Plasma::ScrollWidget* scrollWidget = new Plasma::ScrollWidget(this);
-   QGraphicsWidget* dataWidget = new QGraphicsWidget(scrollWidget);
-   scrollWidget->setWidget(dataWidget);
-   d->resultLayout = new QGraphicsLinearLayout(Qt::Vertical, dataWidget);
-   layout->addItem(scrollWidget);
+   // Create results model and view
+   d->dataModel = new QStandardItemModel(0, 1, this);
+   d->dataView = new Plasma::TreeView(this);
+   d->dataView->setModel(d->dataModel);
+   d->dataView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+   // Set QTreeView properties
+   QTreeView* view = d->dataView->nativeWidget();
+   view->setItemDelegate(new RouteDelegate());
+   view->setRootIsDecorated(false); // No indentation line
+   view->setHeaderHidden(true);
+   view->setWordWrap(true);
+   view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+   // Set transparent background
+   QPalette pal = palette();
+   pal.setColor( QPalette::Background, Qt::transparent);
+   pal.setColor( QPalette::Base, Qt::transparent);
+   view->setPalette(pal);
+
+   // Add view to layout
+   layout->addItem(d->dataView);
 
    // Connect search result
    connect(&d->http, SIGNAL(requestFinished(int,bool)), this, SLOT(searchResult(int,bool)));
@@ -160,16 +182,18 @@ void Transport::searchResult(int id, bool error)
    // Get results
    QList<Route>::iterator it;
    for(it = list.begin(); it != list.end(); ++it) {
-       Plasma::Label* label = new Plasma::Label(this);
+       QStandardItem* item = new QStandardItem();
        const Transit& start = it->transits().front();
        const Transit& end = it->transits().back();
        int duration = start.departs().secsTo(end.arrives());
-       label->setText(start.departs().toString("h:mm") + " " +
-                      start.from() + " - " +
-                      end.from() + " ("  +
-                      QTime().addSecs(duration).toString("h'h' m'm'") + ")");
+       item->setData(start.departs().toString("h:mm") + " " +
+                     start.from() + " - " +
+                     end.from() + " ("  +
+                     QTime().addSecs(duration).toString("h'h' m'm'") + ")",
+                     RouteDelegate::FormattedTextRole);
+       item->setData(true, RouteDelegate::TextBackgroundRole);
 
-    d->resultLayout->addItem(label);
+      d->dataModel->appendRow(item);
    }
 }
 
