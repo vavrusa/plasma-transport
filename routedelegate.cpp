@@ -53,7 +53,7 @@ void RouteDelegate::drawBackground(QPainter* p, const QStyleOptionViewItem& opti
       // Check column count
       if(index.model()->columnCount() > 1) {
          d->svg->setEnabledBorders(Plasma::FrameSvg::TopBorder | Plasma::FrameSvg::BottomBorder);
-         if(index.column() == 0)
+         if(index.column() == 0 && index.sibling(index.row(), index.column() + 1).isValid())
             d->svg->setEnabledBorders(d->svg->enabledBorders() | Plasma::FrameSvg::LeftBorder);
          if(index.column() == index.model()->columnCount() - 1)
             d->svg->setEnabledBorders(d->svg->enabledBorders() | Plasma::FrameSvg::RightBorder);
