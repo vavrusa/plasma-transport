@@ -91,6 +91,8 @@ void RouteDelegate::paint(QPainter* p, const QStyleOptionViewItem& option, const
    // Efficiency
    if(index.data(EfficiencyRole).isValid()) {
       qreal ratio = index.data(EfficiencyRole).toReal();
+
+      // Update pen color
       QPen pen(p->pen());
       pen.setColor(QColor(128 * ratio, 128 * (1.0 - ratio), 0));
       p->setPen(pen);

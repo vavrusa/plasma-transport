@@ -241,6 +241,8 @@ void Transport::searchResult(int id, bool error)
 
       // Ratio as inverse difference
       qreal ratio = 1.0 / (qreal)(longest - shortest);
+      if(longest == shortest)
+         ratio = 1.0;
 
       // Update model
       for(it = list.begin(); it != list.end(); ++it) {
