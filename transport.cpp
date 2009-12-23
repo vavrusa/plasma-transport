@@ -29,6 +29,7 @@
 #include <Plasma/BusyWidget>
 #include <Plasma/LineEdit>
 #include <QHttp>
+#include <QFile>
 #include <QMap>
 #include "transport.h"
 #include "service.h"
@@ -165,7 +166,7 @@ void Transport::search(const QString &destination, const QDateTime &dt)
 
    // Create Http request
    QUrl url = d->service.url();
-   url.addQueryItem(d->service.key("date"), dt.date().toString("d.M.yyyy"));
+   url.addQueryItem(d->service.key("date"), dt.date().toString(d->service.key("date-format")));
    url.addQueryItem(d->service.key("from"), d->home);
    url.addQueryItem(d->service.key("to"), to.trimmed());
    url.addQueryItem(d->service.key("time"), time);
@@ -210,8 +211,7 @@ void Transport::searchResult(int id, bool error)
 
    // Parse result
    qDebug() << "Received: " << d->http.bytesAvailable() << " bytes";
-   QString data(d->http.readAll());
-   QList<Route> list = d->service.parse(data);
+   QList<Route> list = d->service.parse(d->http.readAll());
 
    // Update model
    d->dataModel->clear();
