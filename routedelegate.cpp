@@ -90,7 +90,7 @@ void RouteDelegate::paint(QPainter* p, const QStyleOptionViewItem& option, const
 
    // Efficiency
    if(index.data(EfficiencyRole).isValid()) {
-      qreal ratio = index.data(EfficiencyRole).toReal();
+      double ratio = index.data(EfficiencyRole).toDouble();
 
       // Update pen color
       QPen pen(p->pen());

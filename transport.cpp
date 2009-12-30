@@ -241,7 +241,7 @@ void Transport::searchResult(int id, bool error)
       }
 
       // Ratio as inverse difference
-      qreal ratio = 1.0 / (qreal)(longest - shortest);
+      double ratio = 1.0 / (double)(longest - shortest);
       if(longest == shortest)
          ratio = 1.0;
 
