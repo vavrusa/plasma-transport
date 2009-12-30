@@ -108,7 +108,8 @@ void Transport::init()
    d->dataView = new Plasma::TreeView(this);
    d->dataView->setModel(d->dataModel);
    d->dataView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-   d->dataView->setFocusProxy(d->searchLine);
+   // TODO: Investigate which Qt version implements this
+   //d->dataView->setFocusProxy(d->searchLine);
 
    // Set QTreeView properties
    QTreeView* view = d->dataView->nativeWidget();
